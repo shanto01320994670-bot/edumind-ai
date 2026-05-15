@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduMind AI — Powered by Gemini</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e6b5;
+    --text: #e8e8f0;
+    --text2: #8888aa;
+    --glow: 0 0 40px rgba(108,99,255,0.3);
+    --radius: 16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'DM Sans',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ── ANIMATED BG ── */
+  .bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+  .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.15;animation:drift 12s ease-in-out infinite alternate;}
+  .orb1{width:500px;height:500px;background:var(--accent);top:-100px;left:-100px;animation-duration:14s;}
+  .orb2{width:400px;height:400px;background:var(--accent2);bottom:-100px;right:-50px;animation-duration:11s;animation-delay:-4s;}
+  .orb3{width:300px;height:300px;background:var(--accent3);top:50%;left:50%;animation-duration:16s;animation-delay:-8s;}
+  @keyframes drift{0%{transform:translate(0,0) scale(1);}100%{transform:translate(60px,40px) scale(1.15);}}
+
+  /* ── SCREEN SYSTEM ── */
+  .screen{display:none;position:relative;z-index:1;}
+  .screen.active{display:flex;}
+
+  /* ══════════════════════════════
+     AUTH SCREENS
+  ══════════════════════════════ */
+  .auth-screen{
+    min-height:100vh;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .auth-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:48px 40px;
+    width:100%;
+    max-width:440px;
+    box-shadow:var(--glow),0 40px 80px rgba(0,0,0,0.5);
+    animation:slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+
+  .brand{
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:32px;
+  }
+  .brand-icon{
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+  }
+  .brand-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;}
+  .brand-name span{color:var(--accent);}
+
+  .auth-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;margin-bottom:6px;}
+  .auth-sub{color:var(--text2);font-size:14px;margin-bottom:28px;}
+
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500;}
+  .field input{
+    width:100%;padding:13px 16px;
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:10px;color:var(--text);font-size:15px;
+    font-family:'DM Sans',sans-serif;
+    transition:border-color 0.2s,box-shadow 0.2s;outline:none;
+  }
+  .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,0.15);}
+
+  .btn-primary{
+    width:100%;padding:14px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--accent),#8b5cf6);
+    color:#fff;font-size:15px;font-weight:600;
+    font-family:'DM Sans',sans-serif;
+    border-radius:10px;
+    transition:transform 0.15s,box-shadow 0.15s;
+    margin-top:8px;
+  }
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(108,99,255,0.4);}
+  .btn-primary:active{transform:translateY(0);}
+
+  .auth-switch{
+    margin-top:20px;text-align:center;font-size:14px;color:var(--text2);
+  }
+  .auth-switch a{color:var(--accent);cursor:pointer;text-decoration:none;font-weight:500;}
+  .auth-switch a:hover{text-decoration:underline;}
+
+  .error-msg{
+    background:rgba(255,101,132,0.12);border:1px solid rgba(255,101,132,0.3);
+    border-radius:8px;padding:10px 14px;font-size:13px;color:var(--accent2);
+    margin-bottom:12px;display:none;
+  }
+
+  /* ══════════════════════════════
+     MAIN APP
+  ══════════════════════════════ */
+  .app-screen{
+    flex-direction:row;
+    min-height:100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar{
+    width:260px;min-height:100vh;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex;flex-direction:column;
+    padding:24px 16px;
+    flex-shrink:0;
+    position:sticky;top:0;height:100vh;
+    overflow-y:auto;
+  }
+  .sidebar-brand{
+    display:flex;align-items:center;gap:10px;
+    padding:4px 8px 20px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:16px;
+  }
+  .sidebar-brand .brand-icon{width:36px;height:36px;font-size:18px;}
+  .sidebar-brand .brand-name{font-size:18px;}
+
+  .sidebar-section{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:0 8px;margin-bottom:8px;margin-top:16px;}
+
+  .chat-list{flex:1;overflow-y:auto;}
+  .chat-item{
+    padding:10px 12px;border-radius:10px;cursor:pointer;
+    font-size:13px;color:var(--text2);
+    display:flex;align-items:center;gap:8px;
+    transition:background 0.15s,color 0.15s;
+    margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .chat-item:hover{background:var(--surface2);color:var(--text);}
+  .chat-item.active{background:rgba(108,99,255,0.15);color:var(--accent);}
+  .chat-item-icon{opacity:0.5;flex-shrink:0;}
+
+  .new-chat-btn{
+    width:100%;padding:11px;border-radius:10px;border:1px dashed var(--border);
+    background:transparent;color:var(--text2);cursor:pointer;
+    font-family:'DM Sans',sans-serif;font-size:13px;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    transition:all 0.2s;margin-bottom:8px;
+  }
+  .new-chat-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(108,99,255,0.05);}
+
+  .sidebar-bottom{
+    border-top:1px solid var(--border);
+    padding-top:16px;margin-top:8px;
+  }
+  .user-info{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 10px;border-radius:10px;
+    cursor:pointer;transition:background 0.15s;
+  }
+  .user-info:hover{background:var(--surface2);}
+  .avatar{
+    width:34px;height:34px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;color:#fff;flex-shrink:0;
+  }
+  .user-name{font-size:13px;font-weight:500;}
+  .user-email{font-size:11px;color:var(--text2);}
+
+  .logout-btn{
+    width:100%;margin-top:8px;padding:9px;border-radius:10px;
+    border:1px solid var(--border);background:transparent;
+    color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;
+    font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;
+    transition:all 0.2s;
+  }
+  .logout-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+
+  /* ── MAIN CONTENT ── */
+  .main{
+    flex:1;display:flex;flex-direction:column;
+    min-height:100vh;overflow:hidden;
+  }
+
+  .topbar{
+    padding:16px 28px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(10,10,15,0.8);backdrop-filter:blur(12px);
+    position:sticky;top:0;z-index:10;
+  }
+  .topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+  .model-badge{
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:20px;padding:5px 14px;font-size:12px;color:var(--accent3);
+    font-weight:500;display:flex;align-items:center;gap:6px;
+  }
+  .model-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent3);display:inline-block;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+  /* ── CHAT AREA ── */
+  .chat-area{
+    flex:1;overflow-y:auto;padding:28px;
+    display:flex;flex-direction:column;gap:20px;
+  }
+
+  /* Welcome */
+  .welcome{
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;
+    min-height:60vh;gap:16px;
+    animation:fadeIn 0.6s ease;
+  }
+  @keyframes fadeIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  .welcome-icon{
+    width:72px;height:72px;border-radius:20px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:36px;
+    box-shadow:0 0 40px rgba(108,99,255,0.4);
+  }
+  .welcome h2{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1.2;}
+  .welcome h2 span{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .welcome p{color:var(--text2);font-size:16px;max-width:480px;line-height:1.6;}
+
+  .suggestion-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
+    max-width:600px;width:100%;margin-top:8px;
+  }
+  .suggestion{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:14px 16px;cursor:pointer;
+    text-align:left;font-size:13px;color:var(--text2);
+    transition:all 0.2s;line-height:1.5;
+  }
+  .suggestion:hover{border-color:var(--accent);color:var(--text);background:rgba(108,99,255,0.05);}
+  .suggestion strong{display:block;color:var(--text);margin-bottom:3px;font-size:13px;}
+
+  /* Messages */
+  .message{display:flex;gap:12px;animation:msgIn 0.3s ease;}
+  @keyframes msgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .msg-avatar{
+    width:32px;height:32px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:14px;
+  }
+  .message.user .msg-avatar{background:linear-gradient(135deg,var(--accent),#8b5cf6);margin-left:auto;order:2;}
+  .message.ai .msg-avatar{background:linear-gradient(135deg,var(--accent3),#06b6d4);}
+  .msg-content{
+    max-width:75%;padding:14px 18px;border-radius:16px;
+    font-size:14px;line-height:1.7;
+  }
+  .message.user .msg-content{
+    background:linear-gradient(135deg,rgba(108,99,255,0.2),rgba(139,92,246,0.15));
+    border:1px solid rgba(108,99,255,0.2);
+    border-bottom-right-radius:4px;
+    margin-left:auto;
+  }
+  .message.ai .msg-content{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-bottom-left-radius:4px;
+  }
+  .message.ai .msg-content pre{
+    background:var(--bg);border:1px solid var(--border);
+    border-radius:8px;padding:12px;overflow-x:auto;
+    font-size:13px;margin:10px 0;
+  }
+  .message.ai .msg-content code:not(pre code){
+    background:rgba(108,99,255,0.15);padding:2px 6px;border-radius:4px;font-size:13px;
+  }
+  .message.ai .msg-content table{width:100%;border-collapse:collapse;margin:10px 0;}
+  .message.ai .msg-content th,.message.ai .msg-content td{
+    border:1px solid var(--border);padding:8px 12px;text-align:left;font-size:13px;
+  }
+  .message.ai .msg-content th{background:var(--surface2);}
+
+  /* Attached files/images */
+  .attachment-preview{
+    display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;
+  }
+  .att-img{
+    width:80px;height:80px;object-fit:cover;border-radius:8px;
+    border:1px solid var(--border);
+  }
+  .att-file{
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text2);
+    display:flex;align-items:center;gap:6px;
+  }
+
+  /* Typing */
+  .typing-indicator{display:flex;align-items:center;gap:4px;padding:14px 18px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:bounce 1.2s infinite;}
+  .dot:nth-child(2){animation-delay:0.2s;}
+  .dot:nth-child(3){animation-delay:0.4s;}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-8px);}}
+
+  /* ── INPUT AREA ── */
+  .input-area{
+    padding:16px 28px 24px;border-top:1px solid var(--border);
+    background:rgba(10,10,15,0.95);
+  }
+  .attachments-bar{
+    display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;
+  }
+  .att-chip{
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text2);
+    display:flex;align-items:center;gap:6px;
+  }
+  .att-chip-remove{
+    background:none;border:none;color:var(--text2);cursor:pointer;
+    font-size:14px;padding:0;line-height:1;
+    transition:color 0.15s;
+  }
+  .att-chip-remove:hover{color:var(--accent2);}
+
+  .input-box{
+    display:flex;align-items:flex-end;gap:8px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:16px;padding:8px 8px 8px 16px;
+    transition:border-color 0.2s,box-shadow 0.2s;
+  }
+  .input-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,0.1);}
+  .msg-input{
+    flex:1;background:none;border:none;outline:none;
+    color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;
+    resize:none;max-height:160px;overflow-y:auto;
+    padding:6px 0;line-height:1.5;
+  }
+  .msg-input::placeholder{color:var(--text2);}
+
+  .input-actions{display:flex;align-items:center;gap:4px;}
+  .icon-btn{
+    width:36px;height:36px;border-radius:10px;border:none;
+    background:transparent;color:var(--text2);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;transition:all 0.2s;
+    position:relative;
+  }
+  .icon-btn:hover{background:var(--surface2);color:var(--text);}
+  .icon-btn input[type=file]{
+    position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+  }
+
+  .send-btn{
+    width:36px;height:36px;border-radius:10px;border:none;
+    background:linear-gradient(135deg,var(--accent),#8b5cf6);
+    color:#fff;cursor:pointer;font-size:16px;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform 0.15s,box-shadow 0.15s;
+    flex-shrink:0;
+  }
+  .send-btn:hover{transform:scale(1.05);box-shadow:0 4px 16px rgba(108,99,255,0.4);}
+  .send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+
+  .input-hint{
+    text-align:center;font-size:11px;color:var(--text2);
+    margin-top:8px;opacity:0.6;
+  }
+
+  /* ── API KEY SETUP ── */
+  .api-setup-banner{
+    background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(67,230,181,0.05));
+    border:1px solid rgba(108,99,255,0.3);
+    border-radius:12px;padding:16px 20px;margin-bottom:16px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .api-setup-banner .icon{font-size:24px;}
+  .api-setup-banner .text{flex:1;}
+  .api-setup-banner .text strong{display:block;font-size:14px;margin-bottom:2px;}
+  .api-setup-banner .text small{font-size:12px;color:var(--text2);}
+  .api-setup-banner .btn-sm{
+    padding:8px 16px;border-radius:8px;border:none;
+    background:var(--accent);color:#fff;cursor:pointer;
+    font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;
+    white-space:nowrap;transition:opacity 0.2s;
+  }
+  .api-setup-banner .btn-sm:hover{opacity:0.85;}
+
+  /* API Key Modal */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.7);
+    display:none;align-items:center;justify-content:center;
+    z-index:100;backdrop-filter:blur(4px);
+    padding:20px;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:20px;padding:36px 32px;max-width:480px;width:100%;
+    box-shadow:0 40px 80px rgba(0,0,0,0.6);
+    animation:slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  .modal h3{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px;}
+  .modal p{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.6;}
+  .modal p a{color:var(--accent);text-decoration:none;}
+  .modal p a:hover{text-decoration:underline;}
+  .modal-btns{display:flex;gap:8px;margin-top:16px;}
+  .btn-secondary{
+    flex:1;padding:12px;border-radius:10px;
+    border:1px solid var(--border);background:transparent;
+    color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;
+    font-size:14px;transition:all 0.2s;
+  }
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* Responsive */
+  @media(max-width:768px){
+    .sidebar{display:none;}
+    .chat-area{padding:16px;}
+    .input-area{padding:12px 16px 20px;}
+    .suggestion-grid{grid-template-columns:1fr;}
+    .topbar{padding:12px 16px;}
+    .msg-content{max-width:90%;}
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+</style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="loginScreen" class="screen auth-screen active">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">🧠</div>
+      <div class="brand-name">Edu<span>Mind</span> AI</div>
+    </div>
+    <h2 class="auth-title">Welcome back</h2>
+    <p class="auth-sub">Sign in to your AI education assistant</p>
+    <div class="error-msg" id="loginError"></div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Sign In →</button>
+    <div class="auth-switch">
+      Don't have an account? <a onclick="showScreen('signupScreen')">Create one</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SIGNUP SCREEN ══ -->
+<div id="signupScreen" class="screen auth-screen">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">🧠</div>
+      <div class="brand-name">Edu<span>Mind</span> AI</div>
+    </div>
+    <h2 class="auth-title">Create account</h2>
+    <p class="auth-sub">Join thousands learning with AI-powered education</p>
+    <div class="error-msg" id="signupError"></div>
+    <div class="field">
+      <label>Full Name</label>
+      <input type="text" id="signupName" placeholder="Md. Rahim">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="signupEmail" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="signupPass" placeholder="Minimum 6 characters">
+    </div>
+    <button class="btn-primary" onclick="doSignup()">Create Account →</button>
+    <div class="auth-switch">
+      Already have an account? <a onclick="showScreen('loginScreen')">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="appScreen" class="screen app-screen">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon" style="width:36px;height:36px;font-size:18px;">🧠</div>
+      <div class="brand-name" style="font-size:18px;">Edu<span style="color:var(--accent)">Mind</span></div>
+    </div>
+    <button class="new-chat-btn" onclick="newChat()">
+      <span>✏️</span> New Chat
+    </button>
+    <div class="sidebar-section">Recent Chats</div>
+    <div class="chat-list" id="chatList"></div>
+    <div class="sidebar-bottom">
+      <div class="user-info">
+        <div class="avatar" id="sidebarAvatar">U</div>
+        <div>
+          <div class="user-name" id="sidebarName">User</div>
+          <div class="user-email" id="sidebarEmail">-</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">
+        <span>🚪</span> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="chatTitle">EduMind AI</div>
+      <div class="model-badge">Gemini 1.5 Flash • Active</div>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <!-- Welcome shown by JS -->
+    </div>
+
+    <div class="input-area">
+      <div id="attachmentsBar" class="attachments-bar"></div>
+      <div class="input-box">
+        <textarea class="msg-input" id="msgInput"
+          placeholder="Ask any education question…"
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"></textarea>
+        <div class="input-actions">
+          <!-- Image upload -->
+          <button class="icon-btn" title="Attach Image">
+            🖼️
+            <input type="file" accept="image/*" multiple onchange="handleImageUpload(event)">
+          </button>
+          <!-- File upload -->
+          <button class="icon-btn" title="Attach File">
+            📎
+            <input type="file" accept=".pdf,.doc,.docx,.txt,.md,.csv,.json" multiple onchange="handleFileUpload(event)">
+          </button>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+        </div>
+      </div>
+      <div class="input-hint">EduMind AI can make mistakes. Verify important information.</div>
+    </div>
+  </main>
+</div>
+
+<!-- API Key Modal -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <h3>🔑 Gemini API Key</h3>
+    <p>
+      EduMind AI uses <strong style="color:var(--accent3)">Google Gemini</strong> for deep AI analysis.<br><br>
+      📌 <strong>Free Key পাওয়ার নিয়ম:</strong><br>
+      1. <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a> এ যাও<br>
+      2. Google Account দিয়ে Login করো<br>
+      3. <strong>"Create API Key"</strong> বাটনে ক্লিক করো<br>
+      4. Key copy করে নিচে paste করো<br><br>
+      ✅ Free: 15 req/min | কোনো Credit Card লাগবে না
+    </p>
+    <div class="field">
+      <label>Gemini API Key (AIza... দিয়ে শুরু)</label>
+      <input type="text" id="apiKeyInput" placeholder="AIzaSy...">
+    </div>
+    <div id="apiTestResult" style="font-size:13px;margin:8px 0;min-height:20px;"></div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="testApiKey()">🧪 Test</button>
+      <button class="btn-primary" style="flex:1" onclick="saveApiKey()">Save & Use →</button>
+    </div>
+    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="closeApiModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let currentUser = null;
+let apiKey = '';
+let chats = []; // [{id,title,messages:[]}]
+let activeChatId = null;
+let pendingAttachments = []; // [{type:'image'|'file', name, data, mimeType}]
+
+const SYSTEM_PROMPT = `You are EduMind AI — an expert education assistant powered by advanced AI. 
+You specialize in:
+- Deep academic analysis of any subject (Math, Physics, Chemistry, Biology, History, Literature, CS, etc.)
+- Step-by-step problem solving with clear explanations
+- Concept clarification from beginner to PhD level
+- Analyzing images, diagrams, and documents provided by students
+- Creating study plans, summaries, mnemonics, and practice problems
+- Explaining complex theories in simple Bengali or English as needed
+- Providing references and sources
+
+Always be thorough, accurate, and encouraging. When solving problems, show all steps. 
+If given an image or file, analyze it deeply and explain what you see in an educational context.
+Format responses clearly using markdown with headers, bullet points, code blocks, and tables when appropriate.`;
+
+// ══════════════════════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════════════
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem('edumind_users') || '{}'); } catch{ return {}; }
+}
+function saveUsers(u) { localStorage.setItem('edumind_users', JSON.stringify(u)); }
+
+function doSignup() {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('signupPass').value;
+  const err = document.getElementById('signupError');
+
+  if (!name || !email || !pass) { showErr(err, 'Please fill in all fields.'); return; }
+  if (pass.length < 6) { showErr(err, 'Password must be at least 6 characters.'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr(err, 'Invalid email address.'); return; }
+
+  const users = getUsers();
+  if (users[email]) { showErr(err, 'An account with this email already exists.'); return; }
+
+  users[email] = { name, email, pass, createdAt: Date.now() };
+  saveUsers(users);
+  loginUser(users[email]);
+}
+
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+
+  if (!email || !pass) { showErr(err, 'Please enter your email and password.'); return; }
+
+  const users = getUsers();
+  const user = users[email];
+  if (!user || user.pass !== pass) { showErr(err, 'Invalid email or password.'); return; }
+
+  loginUser(user);
+}
+
+function loginUser(user) {
+  currentUser = user;
+  localStorage.setItem('edumind_session', JSON.stringify(user));
+  apiKey = localStorage.getItem(`edumind_key_${user.email}`) || '';
+  loadUserData();
+  updateSidebar();
+  showScreen('appScreen');
+  showWelcome();
+}
+
+function doLogout() {
+  localStorage.removeItem('edumind_session');
+  currentUser = null; apiKey = ''; chats = []; activeChatId = null; pendingAttachments = [];
+  showScreen('loginScreen');
+}
+
+function showErr(el, msg) {
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// Auto-login
+(function init() {
+  try {
+    const s = JSON.parse(localStorage.getItem('edumind_session') || 'null');
+    if (s && s.email) { loginUser(s); return; }
+  } catch {}
+})();
+
+// ══════════════════════════════════════════════════════
+//  USER DATA
+// ══════════════════════════════════════════════════════
+function loadUserData() {
+  try {
+    chats = JSON.parse(localStorage.getItem(`edumind_chats_${currentUser.email}`) || '[]');
+  } catch { chats = []; }
+  renderChatList();
+}
+function saveUserData() {
+  localStorage.setItem(`edumind_chats_${currentUser.email}`, JSON.stringify(chats));
+}
+
+function updateSidebar() {
+  if (!currentUser) return;
+  document.getElementById('sidebarAvatar').textContent = currentUser.name[0].toUpperCase();
+  document.getElementById('sidebarName').textContent = currentUser.name;
+  document.getElementById('sidebarEmail').textContent = currentUser.email;
+}
+
+// ══════════════════════════════════════════════════════
+//  CHAT MANAGEMENT
+// ══════════════════════════════════════════════════════
+function newChat() {
+  activeChatId = null;
+  pendingAttachments = [];
+  document.getElementById('attachmentsBar').innerHTML = '';
+  renderChatList();
+  showWelcome();
+  document.getElementById('chatTitle').textContent = 'EduMind AI';
+}
+
+function loadChat(id) {
+  activeChatId = id;
+  const chat = chats.find(c => c.id === id);
+  if (!chat) return;
+  document.getElementById('chatTitle').textContent = chat.title;
+  renderMessages(chat.messages);
+  renderChatList();
+}
+
+function renderChatList() {
+  const el = document.getElementById('chatList');
+  el.innerHTML = chats.slice().reverse().map(c => `
+    <div class="chat-item ${c.id === activeChatId ? 'active' : ''}" onclick="loadChat('${c.id}')">
+      <span class="chat-item-icon">💬</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;">${escHtml(c.title)}</span>
+    </div>
+  `).join('');
+}
+
+function renderMessages(messages) {
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '';
+  messages.forEach(m => appendMessageEl(m.role, m.displayContent || m.content, m.attachments));
+  area.scrollTop = area.scrollHeight;
+}
+
+function showWelcome() {
+  const area = document.getElementById('chatArea');
+  area.innerHTML = `
+    <div class="welcome">
+      <div class="welcome-icon">🧠</div>
+      <h2>Hello, <span>${escHtml(currentUser?.name?.split(' ')[0] || 'Student')}</span>!</h2>
+      <p>I'm EduMind AI — your deep analysis education assistant. Ask me anything, paste images, or upload documents.</p>
+      ${!apiKey ? `<div class="api-setup-banner" style="max-width:520px;width:100%;">
+        <span class="icon">🔑</span>
+        <div class="text">
+          <strong>Add your Gemini API Key to activate AI</strong>
+          <small>Free from Google AI Studio — no credit card required</small>
+        </div>
+        <button class="btn-sm" onclick="openApiModal()">Add Key</button>
+      </div>` : ''}
+      <div class="suggestion-grid">
+        <div class="suggestion" onclick="useSuggestion(this)">
+          <strong>📐 Math Problem</strong>
+          Solve and explain this integral step-by-step with all concepts
+        </div>
+        <div class="suggestion" onclick="useSuggestion(this)">
+          <strong>🔬 Science Deep Dive</strong>
+          Explain quantum entanglement with real-world examples
+        </div>
+        <div class="suggestion" onclick="useSuggestion(this)">
+          <strong>📜 History Analysis</strong>
+          Analyze causes and effects of World War 2 comprehensively
+        </div>
+        <div class="suggestion" onclick="useSuggestion(this)">
+          <strong>💡 Study Plan</strong>
+          Create a 30-day study plan for HSC Physics exam
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function useSuggestion(el) {
+  const strong = el.querySelector('strong').textContent.replace(/^.+? /, '');
+  const text = el.children[1]?.textContent || strong;
+  document.getElementById('msgInput').value = text;
+  autoResize(document.getElementById('msgInput'));
+  sendMessage();
+}
+
+// ══════════════════════════════════════════════════════
+//  FILE / IMAGE HANDLING
+// ══════════════════════════════════════════════════════
+function handleImageUpload(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const b64 = ev.target.result.split(',')[1];
+      pendingAttachments.push({ type: 'image', name: file.name, data: b64, mimeType: file.type, dataUrl: ev.target.result });
+      renderAttachBar();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function handleFileUpload(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      if (file.type === 'application/pdf') {
+        const b64 = ev.target.result.split(',')[1];
+        pendingAttachments.push({ type: 'pdf', name: file.name, data: b64, mimeType: file.type });
+      } else {
+        const text = ev.target.result;
+        pendingAttachments.push({ type: 'text', name: file.name, data: text, mimeType: file.type });
+      }
+      renderAttachBar();
+    };
+    if (file.type === 'application/pdf') reader.readAsDataURL(file);
+    else reader.readAsText(file);
+  });
+  e.target.value = '';
+}
+
+function renderAttachBar() {
+  const bar = document.getElementById('attachmentsBar');
+  bar.innerHTML = pendingAttachments.map((a, i) => `
+    <div class="att-chip">
+      ${a.type === 'image' ? '🖼️' : a.type === 'pdf' ? '📄' : '📝'}
+      ${escHtml(a.name)}
+      <button class="att-chip-remove" onclick="removeAtt(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function removeAtt(i) {
+  pendingAttachments.splice(i, 1);
+  renderAttachBar();
+}
+
+// ══════════════════════════════════════════════════════
+//  SEND MESSAGE
+// ══════════════════════════════════════════════════════
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text && pendingAttachments.length === 0) return;
+  if (!apiKey) { openApiModal(); return; }
+
+  const atts = [...pendingAttachments];
+  pendingAttachments = [];
+  renderAttachBar();
+  input.value = '';
+  autoResize(input);
+
+  // Create chat if needed
+  if (!activeChatId) {
+    const id = 'chat_' + Date.now();
+    const title = text.slice(0, 50) || 'Attachment';
+    chats.push({ id, title, messages: [] });
+    activeChatId = id;
+    document.getElementById('chatTitle').textContent = title;
+    // Clear welcome
+    document.getElementById('chatArea').innerHTML = '';
+  }
+
+  const chat = chats.find(c => c.id === activeChatId);
+
+  // Append user message
+  appendMessageEl('user', text, atts);
+  chat.messages.push({ role: 'user', content: text, displayContent: text, attachments: atts });
+  renderChatList();
+  saveUserData();
+  scrollChat();
+
+  // Typing indicator
+  const typingEl = document.createElement('div');
+  typingEl.className = 'message ai';
+  typingEl.innerHTML = `<div class="msg-avatar">🧠</div><div class="msg-content"><div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  document.getElementById('chatArea').appendChild(typingEl);
+  scrollChat();
+
+  document.getElementById('sendBtn').disabled = true;
+
+  try {
+    const reply = await callGemini(chat.messages, atts);
+    typingEl.remove();
+    appendMessageEl('ai', reply);
+    chat.messages.push({ role: 'ai', content: reply, displayContent: reply });
+    saveUserData();
+    scrollChat();
+  } catch(err) {
+    typingEl.remove();
+    const errMsg = `❌ Error: ${err.message}`;
+    appendMessageEl('ai', errMsg);
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+}
+
+// ══════════════════════════════════════════════════════
+//  GEMINI API
+// ══════════════════════════════════════════════════════
+async function callGemini(messages, latestAtts) {
+  // Build contents array
+  const contents = [];
+
+  // Add history (last 10 messages for context)
+  const history = messages.slice(-11, -1); // exclude last user msg (already in messages)
+  for (const m of history) {
+    const role = m.role === 'user' ? 'user' : 'model';
+    contents.push({ role, parts: [{ text: m.content || '' }] });
+  }
+
+  // Build current user parts
+  const parts = [];
+
+  // Add attachments
+  for (const att of latestAtts || []) {
+    if (att.type === 'image') {
+      parts.push({ inline_data: { mime_type: att.mimeType, data: att.data } });
+    } else if (att.type === 'pdf') {
+      parts.push({ inline_data: { mime_type: 'application/pdf', data: att.data } });
+    } else if (att.type === 'text') {
+      parts.push({ text: `[File: ${att.name}]\n\n${att.data}` });
+    }
+  }
+
+  const lastMsg = messages[messages.length - 1];
+  if (lastMsg?.content) parts.push({ text: lastMsg.content });
+
+  contents.push({ role: 'user', parts });
+
+  const body = {
+    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents,
+    generationConfig: {
+      temperature: 0.7,
+      topP: 0.95,
+      maxOutputTokens: 8192,
+    }
+  };
+
+  // Try gemini-1.5-flash first, fallback to gemini-pro
+  const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro'];
+  let lastErr = null;
+
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const msg = errData?.error?.message || `HTTP ${res.status}`;
+        if (res.status === 400 && (msg.includes('API_KEY') || msg.includes('API key'))) {
+          throw new Error('❌ Invalid API Key! Please check your Gemini API key and try again.');
+        }
+        if (res.status === 429) throw new Error('⏳ Rate limit reached. Please wait a moment.');
+        if (res.status === 403) throw new Error('🔒 API Key does not have permission. Check AI Studio settings.');
+        lastErr = new Error(msg);
+        continue;
+      }
+
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) { lastErr = new Error('Empty response.'); continue; }
+      return text;
+
+    } catch(e) {
+      if (e.message.includes('Invalid API') || e.message.includes('Rate limit') || e.message.includes('permission')) throw e;
+      if (e.name === 'TypeError' && e.message.includes('fetch')) {
+        throw new Error('🌐 Network error! Make sure your internet connection is working and the API key is correct.');
+      }
+      lastErr = e;
+    }
+  }
+
+  throw lastErr || new Error('All models failed.');
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER MESSAGE
+// ══════════════════════════════════════════════════════
+function appendMessageEl(role, content, atts) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+
+  let attsHtml = '';
+  if (atts && atts.length > 0) {
+    attsHtml = '<div class="attachment-preview">';
+    atts.forEach(a => {
+      if (a.type === 'image' && a.dataUrl) {
+        attsHtml += `<img class="att-img" src="${a.dataUrl}" alt="${escHtml(a.name)}">`;
+      } else {
+        attsHtml += `<div class="att-file">${a.type === 'pdf' ? '📄' : '📝'} ${escHtml(a.name)}</div>`;
+      }
+    });
+    attsHtml += '</div>';
+  }
+
+  const rendered = role === 'ai' ? renderMarkdown(content) : escHtml(content).replace(/\n/g, '<br>');
+
+  if (role === 'user') {
+    div.innerHTML = `
+      <div class="msg-content" style="margin-left:auto;">
+        ${attsHtml}
+        ${rendered}
+      </div>
+      <div class="msg-avatar">👤</div>
+    `;
+  } else {
+    div.innerHTML = `
+      <div class="msg-avatar">🧠</div>
+      <div class="msg-content">${rendered}</div>
+    `;
+  }
+
+  area.appendChild(div);
+}
+
+// ══════════════════════════════════════════════════════
+//  MARKDOWN RENDERER (lightweight)
+// ══════════════════════════════════════════════════════
+function renderMarkdown(text) {
+  let h = escHtml(text);
+
+  // Code blocks
+  h = h.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
+    `<pre><code class="lang-${lang}">${code.trim()}</code></pre>`);
+  // Inline code
+  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Bold
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // H1
+  h = h.replace(/^# (.+)$/gm, '<h3 style="font-family:Syne,sans-serif;font-size:18px;margin:14px 0 6px;color:var(--accent);">$1</h3>');
+  // H2
+  h = h.replace(/^## (.+)$/gm, '<h4 style="font-family:Syne,sans-serif;font-size:16px;margin:12px 0 4px;color:var(--accent3);">$1</h4>');
+  // H3
+  h = h.replace(/^### (.+)$/gm, '<h5 style="font-size:14px;margin:10px 0 4px;color:var(--text);">$1</h5>');
+  // Tables
+  h = h.replace(/((\|.+\|\n?)+)/g, matchTable);
+  // Unordered lists
+  h = h.replace(/^[-*] (.+)$/gm, '<li style="margin:3px 0;">$1</li>');
+  h = h.replace(/(<li[^>]*>.*<\/li>\n?)+/g, m => `<ul style="margin:8px 0 8px 18px;">${m}</ul>`);
+  // Ordered lists
+  h = h.replace(/^\d+\. (.+)$/gm, '<oli>$1</oli>');
+  h = h.replace(/(<oli>.*<\/oli>\n?)+/g, m => `<ol style="margin:8px 0 8px 20px;">${m.replace(/<\/?oli>/g, m2 => m2 === '<oli>' ? '<li style="margin:3px 0;">' : '</li>')}</ol>`);
+  // Horizontal rule
+  h = h.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">');
+  // Blockquote
+  h = h.replace(/^&gt; (.+)$/gm, '<blockquote style="border-left:3px solid var(--accent);padding-left:12px;color:var(--text2);margin:8px 0;">$1</blockquote>');
+  // Newlines
+  h = h.replace(/\n\n/g, '<br><br>');
+  h = h.replace(/(?<!>)\n(?!<)/g, '<br>');
+
+  return h;
+}
+
+function matchTable(match) {
+  const rows = match.trim().split('\n').filter(r => r.trim());
+  if (rows.length < 2) return match;
+  let out = '<table>';
+  rows.forEach((row, i) => {
+    if (/^\|[-| :]+\|$/.test(row.trim())) return;
+    const cells = row.split('|').filter((_,idx,arr)=>idx>0&&idx<arr.length-1);
+    const tag = i === 0 ? 'th' : 'td';
+    out += '<tr>' + cells.map(c=>`<${tag}>${c.trim()}</${tag}>`).join('') + '</tr>';
+  });
+  out += '</table>';
+  return out;
+}
+
+// ══════════════════════════════════════════════════════
+//  API KEY
+// ══════════════════════════════════════════════════════
+function openApiModal() {
+  document.getElementById('apiKeyInput').value = apiKey || '';
+  document.getElementById('apiTestResult').textContent = '';
+  document.getElementById('apiModal').classList.add('active');
+}
+function closeApiModal() { document.getElementById('apiModal').classList.remove('active'); }
+
+async function testApiKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  const res = document.getElementById('apiTestResult');
+  if (!k) { res.innerHTML = '<span style="color:var(--accent2)">⚠️ Please enter an API key first.</span>'; return; }
+  res.innerHTML = '<span style="color:var(--text2)">⏳ Testing connection...</span>';
+  try {
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contents:[{role:'user',parts:[{text:'Say OK'}]}], generationConfig:{maxOutputTokens:10} }) }
+    );
+    if (r.ok) {
+      res.innerHTML = '<span style="color:var(--accent3)">✅ Connection successful! API Key is valid.</span>';
+    } else {
+      const d = await r.json().catch(()=>({}));
+      const m = d?.error?.message || `HTTP ${r.status}`;
+      res.innerHTML = `<span style="color:var(--accent2)">❌ Failed: ${m}</span>`;
+    }
+  } catch(e) {
+    res.innerHTML = `<span style="color:var(--accent2)">❌ ${e.message}</span>`;
+  }
+}
+
+function saveApiKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k) return;
+  apiKey = k;
+  localStorage.setItem(`edumind_key_${currentUser.email}`, k);
+  closeApiModal();
+  showWelcome();
+}
+
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+function scrollChat() {
+  const a = document.getElementById('chatArea');
+  a.scrollTop = a.scrollHeight;
+}
+function escHtml(t) {
+  return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
